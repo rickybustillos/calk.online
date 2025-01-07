@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calk - Calculadora Online</title>
+    <!-- Link para o Bootstrap 5.3.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center pb-5">
+            <div class="col-12 text-center">
+                <h1>calk.online</h1>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">Divisão de Despesas Proporcionais</h1>
+                        <p class="text-center text-muted">
+                            Calculadora para dividir as despesas de forma proporcional ao salário de cada pessoa.
+                        </p>
+                        <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+                        <div class="mb-3">
+                            <label for="numberOfPeople" class="form-label">Número de pessoas:</label>
+                            <input type="number" id="numberOfPeople" class="form-control" min="1" placeholder="Ex: 3">
+                        </div>
+                        <div class="text-center">
+                            <button id="confirmButton" class="btn btn-primary" onclick="generateInputFields()">Confirmar</button>
+                        </div>
+        
+                        <div id="inputFields" class="mt-4"></div>
+        
+                        <div id="resultContainer" class="mt-4 d-none">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="card-title">Resultado</h2>
+                                    <div id="resultContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link para o JavaScript do Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                const activeElementId = document.activeElement.id;
+
+                if (activeElementId === 'numberOfPeople') {
+                    generateInputFields();
+                } else if (activeElementId.startsWith('salaryPerson') || activeElementId === 'totalExpenses') {
+                    calculateExpenseDivision();
+                }
+            }
+        });
+
+        function showErrorMessage(message) {
+            const errorMessageDiv = document.getElementById('errorMessage');
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.classList.remove('d-none');
+        }
+
+        function hideErrorMessage() {
+            const errorMessageDiv = document.getElementById('errorMessage');
+            errorMessageDiv.classList.add('d-none');
+        }
+
+        function generateInputFields() {
+            const numberOfPeople = parseInt(document.getElementById('numberOfPeople').value);
+            const inputFieldsContainer = document.getElementById('inputFields');
+            inputFieldsContainer.innerHTML = '';
+            hideErrorMessage();
+
+            if (isNaN(numberOfPeople) || numberOfPeople <= 0) {
+                showErrorMessage('Por favor, insira um número válido de pessoas.');
+                return;
+            }
+
+            if (numberOfPeople > 20) {
+                showErrorMessage('Por favor, insira um número até 20.');
+                return;
+            }
+
+            for (let i = 1; i <= numberOfPeople; i++) {
+                const field = document.createElement('div');
+                field.classList.add('mb-3');
+                field.innerHTML = `
+                    <label for="salaryPerson${i}" class="form-label">Salário da pessoa ${i}:</label>
+                    <input type="number" id="salaryPerson${i}" class="form-control" min="0" step="0.01" placeholder="Ex: 3000" required>
+                `;
+                inputFieldsContainer.appendChild(field);
+            }
+
+            const expenseField = document.createElement('div');
+            expenseField.classList.add('mb-3');
+            expenseField.innerHTML = `
+                <label for="totalExpenses" class="form-label">Total das despesas:</label>
+                <input type="number" id="totalExpenses" class="form-control" min="0" step="0.01" placeholder="Ex: 5000" required>
+            `;
+            inputFieldsContainer.appendChild(expenseField);
+
+            const calculateButton = document.createElement('div');
+            calculateButton.classList.add('text-center');
+            calculateButton.innerHTML = `
+                <button class="btn btn-success" onclick="calculateExpenseDivision()">Calcular</button>
+            `;
+            inputFieldsContainer.appendChild(calculateButton);
+        }
+
+        function calculateExpenseDivision() {
+            const numberOfPeople = parseInt(document.getElementById('numberOfPeople').value);
+            const salaries = [];
+            let totalSalaries = 0;
+
+            for (let i = 1; i <= numberOfPeople; i++) {
+                const salary = parseFloat(document.getElementById(`salaryPerson${i}`).value);
+                if (isNaN(salary) || salary < 0) {
+                    alert(`Por favor, insira um salário válido para a pessoa ${i}.`);
+                    return;
+                }
+                salaries.push(salary);
+                totalSalaries += salary;
+            }
+
+            const totalExpenses = parseFloat(document.getElementById('totalExpenses').value);
+            if (isNaN(totalExpenses) || totalExpenses < 0) {
+                alert('Por favor, insira um valor válido para o total das despesas.');
+                return;
+            }
+
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = '';
+            
+            salaries.forEach((salary, index) => {
+                const percentageOfTotal = (salary / totalSalaries) * 100;
+                const contribution = (salary / totalSalaries) * totalExpenses;
+                const percentageOfSalary = (contribution / salary) * 100;
+
+                const formattedContribution = contribution.toFixed(2).replace('.', ',');
+                const formattedPercentageOfTotal = percentageOfTotal.toFixed(2).replace('.', ',');
+                const formattedPercentageOfSalary = percentageOfSalary.toFixed(2).replace('.', ',');
+
+                const resultItem = document.createElement('p');
+                resultItem.classList.add('mb-2');
+                resultItem.innerHTML = `
+                    <strong>Pessoa ${index + 1}:</strong> 
+                    R$ ${formattedContribution} (${formattedPercentageOfTotal}% do total; 
+                    ${formattedPercentageOfSalary}% do salário).
+                `;
+                resultContent.appendChild(resultItem);
+            });
+
+            document.getElementById('resultContainer').classList.remove('d-none');
+        }
+    </script>
+</body>
+</html>
