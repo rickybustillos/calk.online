@@ -11,7 +11,7 @@
     <div class="container mt-5">
         <div class="row justify-content-center pb-5">
             <div class="col-12 text-center">
-                <h1>calk.online</h1>
+                <h1 class="fw-bold">calk.online</h1>
             </div>
         </div>
         <div class="row justify-content-center">
@@ -45,6 +45,47 @@
                 </div>
             </div>
         </div>
+
+        <div class="row justify-content-center my-5">
+            <!-- Card: Regra de 3 -->
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="card-title text-center">Regra de 3</h2>
+                        <p class="text-center text-muted">
+                            Resolva cálculos simples de regra de três.
+                        </p>
+                        <!-- Formulário da Regra de 3 -->
+                        <form id="ruleOfThreeForm">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="3rvalueA" class="form-label">Valor A:</label>
+                                    <input type="number" id="3rvalueA" class="form-control" placeholder="Ex: 10" required>
+                                </div>
+                                <div class="col-6">
+                                    <label for="3rvalueB" class="form-label">Valor B:</label>
+                                    <input type="number" id="3rvalueB" class="form-control" placeholder="Ex: 20" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label for="3rvalueC" class="form-label">Valor C:</label>
+                                    <input type="number" id="3rvalueC" class="form-control" placeholder="Ex: 30" required>
+                                </div>
+                                <div class="col-6">
+                                    <label for="3rvalueD" class="form-label">Valor D (Resultado):</label>
+                                    <input type="text" id="3rvalueD" class="form-control" placeholder="Clique em calcular" disabled>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button type="button" class="btn btn-success" onclick="calculateRuleOfThree()">Calcular</button>
+                                <button type="reset" class="btn btn-secondary">Limpar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Link para o JavaScript do Bootstrap -->
@@ -58,10 +99,15 @@
                     generateInputFields();
                 } else if (activeElementId.startsWith('salaryPerson') || activeElementId === 'totalExpenses') {
                     calculateExpenseDivision();
+                } else if (activeElementId.startsWith('3r')) {
+                    calculateRuleOfThree();
                 }
             }
         });
 
+        /* 
+         * @description: Calcular Divisão de Despesas
+         */
         function showErrorMessage(message) {
             const errorMessageDiv = document.getElementById('errorMessage');
             errorMessageDiv.textContent = message;
@@ -160,6 +206,35 @@
 
             document.getElementById('resultContainer').classList.remove('d-none');
         }
+        /*
+         * @end Calcular Divisão de Despesas
+         */
+
+        /* 
+         * @description: Regra de três 
+         */
+        function calculateRuleOfThree() {
+            // Obter valores de entrada
+            const valueA = parseFloat(document.getElementById('3rvalueA').value);
+            const valueB = parseFloat(document.getElementById('3rvalueB').value);
+            const valueC = parseFloat(document.getElementById('3rvalueC').value);
+            const valueDField = document.getElementById('3rvalueD');
+
+            // Verificar se todos os valores foram fornecidos corretamente
+            if (isNaN(valueA) || isNaN(valueB) || isNaN(valueC)) {
+                alert('Por favor, preencha todos os campos com valores numéricos válidos.');
+                return;
+            }
+
+            // Regra de três simples: A está para B assim como C está para D
+            const valueD = (valueB * valueC) / valueA;
+
+            // Exibir o resultado no campo "Valor D"
+            valueDField.value = valueD;
+        }
+        /*
+         * @end Regra de três
+         */
     </script>
 </body>
 </html>
