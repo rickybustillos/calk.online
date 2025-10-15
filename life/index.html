@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Rotinas Diárias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #121212;
+            --bs-body-color: #e9ecef;
+        }
+
+        [data-bs-theme="light"] {
+            --bs-body-bg: #ffffff;
+            --bs-body-color: #212529;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .timeline-container {
+            position: relative;
+            height: 600px;
+            overflow-y: auto;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.375rem;
+        }
+
+        .timeline-hour {
+            position: absolute;
+            width: 100%;
+            border-bottom: 1px solid var(--bs-border-color);
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 0.8rem;
+        }
+
+        .timeline-task {
+            position: absolute;
+            border-radius: 0.25rem;
+            padding: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .timeline-task:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
+        .agenda-view {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .agenda-item {
+            border-left: 4px solid;
+            margin-bottom: 10px;
+        }
+
+        .pie-chart-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .calendar-view {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .calendar-hour {
+            border-bottom: 1px solid var(--bs-border-color);
+            padding: 8px;
+            position: relative;
+        }
+
+        .calendar-task {
+            margin: 2px 0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .stats-view {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .stats-card {
+            transition: transform 0.2s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-chart-container {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .period-selector {
+            margin-bottom: 20px;
+        }
+
+        .life-grid {
+            max-height: auto;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .life-unit {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin: 2px;
+            display: inline-block;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .life-unit.lived {
+            background-color: var(--primary-color);
+        }
+
+        .life-unit.remaining {
+            background-color: var(--bs-border-color);
+        }
+
+        .life-unit:hover {
+            transform: scale(1.2);
+            z-index: 1;
+        }
+
+        .life-unit.lived:hover {
+            background-color: var(--danger-color);
+        }
+
+        .life-unit.remaining:hover {
+            background-color: var(--success-color);
+        }
+
+        .life-unit-group {
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--bs-border-color);
+            padding-bottom: 15px;
+        }
+
+        .life-stats {
+            background: var(--bs-body-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .life-progress {
+            height: 10px;
+            margin: 5px 0;
+        }
+
+        .unit-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .life-unit:hover .unit-tooltip {
+            opacity: 1;
+        }
+
+        .view-container {
+            display: none;
+        }
+
+        .active-view {
+            display: block;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+        }
+
+        .task-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .hour-label {
+            width: 60px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .progress {
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Agenda de Rotinas Diárias</h1>
+            <button class="btn btn-primary" id="newTaskBtn">
+                <i class="bi bi-plus-circle"></i> Nova Tarefa
+            </button>
+        </header>
+
+        <div class="theme-toggle">
+            <button id="themeToggle" class="btn btn-outline-secondary">
+                <i class="bi bi-moon"></i>
+            </button>
+        </div>
+
+        <nav>
+            <ul class="nav nav-tabs" id="viewTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
+                        <i class="bi bi-clock"></i> Timeline
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="agenda-tab" data-bs-toggle="tab" data-bs-target="#agenda" type="button" role="tab">
+                        <i class="bi bi-list-task"></i> Agenda
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab">
+                        <i class="bi bi-calendar-week"></i> Calendário
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="piechart-tab" data-bs-toggle="tab" data-bs-target="#piechart" type="button" role="tab">
+                        <i class="bi bi-pie-chart"></i> Gráfico
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab">
+                        <i class="bi bi-bar-chart"></i> Estatísticas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="life-tab" data-bs-toggle="tab" data-bs-target="#life" type="button" role="tab">
+                        <i class="bi bi-heart"></i> Tempo de Vida
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="timeline" role="tabpanel">
+                <div class="timeline-container" id="timelineContainer">
+                    <!-- Timeline will be generated here -->
+                </div>
+            </div>
+            <div class="tab-pane fade" id="agenda" role="tabpanel">
+                <div class="agenda-view" id="agendaView">
+                    <!-- Agenda list will be generated here -->
+                </div>
+            </div>
+            <div class="tab-pane fade" id="calendar" role="tabpanel">
+                <div class="calendar-view" id="calendarView">
+                    <!-- Calendar view will be generated here -->
+                </div>
+            </div>
+            <div class="tab-pane fade" id="piechart" role="tabpanel">
+                <div class="pie-chart-container" id="pieChartContainer">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="stats" role="tabpanel">
+                <div class="stats-view" id="statsView">
+                    <div class="period-selector">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="period" id="week" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="week">Semana</label>
+                            
+                            <input type="radio" class="btn-check" name="period" id="month" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="month">Mês</label>
+                            
+                            <input type="radio" class="btn-check" name="period" id="year" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="year">Ano</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card stats-card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total de Horas</h5>
+                                    <h2 class="text-primary" id="totalHours">0h</h2>
+                                    <p class="text-muted" id="totalHoursPeriod">por semana</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Tarefas Únicas</h5>
+                                    <h2 class="text-success" id="uniqueTasks">0</h2>
+                                    <p class="text-muted">tipos de atividades</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card stats-card text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">Atividade Mais Longa</h5>
+                                    <h2 class="text-info" id="longestTask">-</h2>
+                                    <p class="text-muted" id="longestTaskHours">0h</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-chart-container">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Distribuição por Tarefa</h5>
+                            <div id="taskDistribution">
+                                <!-- Task distribution will be generated here -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Comparativo de Períodos</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Horas por Semana</label>
+                                        <div class="progress">
+                                            <div class="progress-bar" id="weekProgress" style="width: 0%">0h</div>
+                                        </div>
+                                        <small class="text-muted">Base: 168 horas semanais</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Horas por Mês</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" id="monthProgress" style="width: 0%">0h</div>
+                                        </div>
+                                        <small class="text-muted">Base: 720 horas mensais</small>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Horas por Ano</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" id="yearProgress" style="width: 0%">0h</div>
+                                        </div>
+                                        <small class="text-muted">Base: 8760 horas anuais</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="life" role="tabpanel">
+                <div class="life-view" id="lifeView">
+                    <!-- Life visualization will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Modal -->
+        <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="taskModalLabel">Nova Tarefa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="taskForm">
+                            <input type="hidden" id="taskId">
+                            <div class="mb-3">
+                                <label for="taskName" class="form-label">Nome da Tarefa</label>
+                                <input type="text" class="form-control" id="taskName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskStartTime" class="form-label">Hora de Início</label>
+                                <input type="time" class="form-control" id="taskStartTime" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskEndTime" class="form-label">Hora de Término</label>
+                                <input type="time" class="form-control" id="taskEndTime" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="taskColor" class="form-label">Cor da Tarefa</label>
+                                <input type="color" class="form-control form-control-color" id="taskColor" value="#0d6efd" title="Escolha uma cor">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="deleteTaskBtn" style="display: none;">Excluir</button>
+                        <button type="button" class="btn btn-primary" id="saveTaskBtn">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Birth Date Modal -->
+        <div class="modal fade" id="birthDateModal" tabindex="-1" aria-labelledby="birthDateModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="birthDateModalLabel">Configuração de Tempo de Vida</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>Para visualizar sua representação de tempo de vida, precisamos saber sua data de nascimento.</p>
+                        <form id="birthDateForm">
+                            <div class="mb-3">
+                                <label for="birthDate" class="form-label">Data de Nascimento</label>
+                                <input type="date" class="form-control" id="birthDate" required max="2023-12-31">
+                            </div>
+                            <div class="mb-3">
+                                <label for="lifeExpectancy" class="form-label">Expectativa de Vida (anos)</label>
+                                <input type="number" class="form-control" id="lifeExpectancy" value="80" min="50" max="120" required>
+                                <div class="form-text">Baseado na expectativa de vida média. Você pode ajustar conforme sua preferência.</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="saveBirthDateBtn">Salvar e Visualizar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Application state and constants
+        const STORAGE_KEY = 'dailyRoutines';
+        const BIRTH_DATE_KEY = 'userBirthDate';
+        const LIFE_EXPECTANCY_KEY = 'userLifeExpectancy';
+        const HOUR_HEIGHT = 50; // pixels per hour in timeline
+        const DEFAULT_COLORS = [
+            '#0d6efd', '#6c757d', '#198754', '#dc3545', 
+            '#ffc107', '#0dcaf0', '#6610f2', '#fd7e14'
+        ];
+
+        // Application state
+        let tasks = [];
+        let currentEditingTaskId = null;
+        let pieChart = null;
+        let statsChart = null;
+        let taskModalInstance = null;
+        let birthDateModalInstance = null;
+        let currentStatsPeriod = 'week';
+        let userBirthDate = null;
+        let userLifeExpectancy = 80;
+
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const newTaskBtn = document.getElementById('newTaskBtn');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const agendaView = document.getElementById('agendaView');
+        const calendarView = document.getElementById('calendarView');
+        const pieChartContainer = document.getElementById('pieChartContainer');
+        const pieChartCanvas = document.getElementById('pieChart');
+        const statsView = document.getElementById('statsView');
+        const lifeView = document.getElementById('lifeView');
+        const taskForm = document.getElementById('taskForm');
+        const taskModal = document.getElementById('taskModal');
+        const birthDateModal = document.getElementById('birthDateModal');
+        const birthDateForm = document.getElementById('birthDateForm');
+        const saveTaskBtn = document.getElementById('saveTaskBtn');
+        const deleteTaskBtn = document.getElementById('deleteTaskBtn');
+        const saveBirthDateBtn = document.getElementById('saveBirthDateBtn');
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTasks();
+            loadUserData();
+            initializeEventListeners();
+            renderAllViews();
+            
+            // Initialize modal instances
+            taskModalInstance = new bootstrap.Modal(taskModal);
+            birthDateModalInstance = new bootstrap.Modal(birthDateModal);
+        });
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // New task button
+            newTaskBtn.addEventListener('click', function() {
+                resetTaskForm();
+                taskModalInstance.show();
+            });
+            
+            // Task form submission
+            saveTaskBtn.addEventListener('click', handleSaveTask);
+            
+            // Delete task button
+            deleteTaskBtn.addEventListener('click', handleDeleteTask);
+            
+            // Birth date form submission
+            saveBirthDateBtn.addEventListener('click', handleSaveBirthDate);
+            
+            // Modal events
+            taskModal.addEventListener('hidden.bs.modal', function() {
+                currentEditingTaskId = null;
+            });
+            
+            // Tab switching
+            document.getElementById('piechart-tab').addEventListener('click', function() {
+                renderPieChart();
+            });
+            
+            document.getElementById('calendar-tab').addEventListener('click', function() {
+                renderCalendarView();
+            });
+            
+            document.getElementById('stats-tab').addEventListener('click', function() {
+                renderStatsView();
+            });
+            
+            document.getElementById('life-tab').addEventListener('click', function() {
+                // Only ask for birth date when accessing life tab for the first time
+                if (!userBirthDate) {
+                    birthDateModalInstance.show();
+                } else {
+                    renderLifeView();
+                }
+            });
+            
+            // Period selector for stats
+            document.querySelectorAll('input[name="period"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentStatsPeriod = this.id;
+                    renderStatsView();
+                });
+            });
+        }
+
+        // User data management
+        function loadUserData() {
+            const storedBirthDate = localStorage.getItem(BIRTH_DATE_KEY);
+            const storedLifeExpectancy = localStorage.getItem(LIFE_EXPECTANCY_KEY);
+            
+            userBirthDate = storedBirthDate ? new Date(storedBirthDate) : null;
+            userLifeExpectancy = storedLifeExpectancy ? parseInt(storedLifeExpectancy) : 80;
+        }
+
+        function saveUserData() {
+            if (userBirthDate) {
+                localStorage.setItem(BIRTH_DATE_KEY, userBirthDate.toISOString());
+            }
+            localStorage.setItem(LIFE_EXPECTANCY_KEY, userLifeExpectancy.toString());
+        }
+
+        function handleSaveBirthDate() {
+            const birthDateInput = document.getElementById('birthDate').value;
+            const lifeExpectancyInput = document.getElementById('lifeExpectancy').value;
+            
+            if (!birthDateInput) {
+                alert('Por favor, informe sua data de nascimento.');
+                return;
+            }
+            
+            userBirthDate = new Date(birthDateInput);
+            userLifeExpectancy = parseInt(lifeExpectancyInput);
+            
+            // Validate birth date
+            if (userBirthDate > new Date()) {
+                alert('A data de nascimento não pode ser no futuro.');
+                return;
+            }
+            
+            saveUserData();
+            birthDateModalInstance.hide();
+            renderLifeView();
+        }
+
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            themeToggle.innerHTML = newTheme === 'dark' ? '<i class="bi bi-moon"></i>' : '<i class="bi bi-sun"></i>';
+            
+            // Re-render charts if they exist to update colors
+            if (pieChart) {
+                renderPieChart();
+            }
+            if (statsChart) {
+                renderStatsView();
+            }
+        }
+
+        // Task management functions
+        function loadTasks() {
+            const storedTasks = localStorage.getItem(STORAGE_KEY);
+            tasks = storedTasks ? JSON.parse(storedTasks) : [];
+        }
+
+        function saveTasks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function generateTaskId() {
+            return Date.now().toString();
+        }
+
+        function addTask(taskData) {
+            const newTask = {
+                id: generateTaskId(),
+                name: taskData.name,
+                startTime: taskData.startTime,
+                endTime: taskData.endTime,
+                color: taskData.color || getRandomColor()
+            };
+            
+            tasks.push(newTask);
+            saveTasks();
+            renderAllViews();
+        }
+
+        function updateTask(taskId, taskData) {
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex !== -1) {
+                tasks[taskIndex] = {
+                    ...tasks[taskIndex],
+                    ...taskData
+                };
+                saveTasks();
+                renderAllViews();
+            }
+        }
+
+        function deleteTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderAllViews();
+        }
+
+        function getRandomColor() {
+            return DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)];
+        }
+
+        // Form handling
+        function resetTaskForm() {
+            document.getElementById('taskId').value = '';
+            document.getElementById('taskName').value = '';
+            document.getElementById('taskStartTime').value = '';
+            document.getElementById('taskEndTime').value = '';
+            document.getElementById('taskColor').value = getRandomColor();
+            deleteTaskBtn.style.display = 'none';
+            document.getElementById('taskModalLabel').textContent = 'Nova Tarefa';
+        }
+
+        function populateTaskForm(task) {
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskName').value = task.name;
+            document.getElementById('taskStartTime').value = task.startTime;
+            document.getElementById('taskEndTime').value = task.endTime;
+            document.getElementById('taskColor').value = task.color;
+            deleteTaskBtn.style.display = 'block';
+            document.getElementById('taskModalLabel').textContent = 'Editar Tarefa';
+        }
+
+        function handleSaveTask() {
+            const taskId = document.getElementById('taskId').value;
+            const taskData = {
+                name: document.getElementById('taskName').value,
+                startTime: document.getElementById('taskStartTime').value,
+                endTime: document.getElementById('taskEndTime').value,
+                color: document.getElementById('taskColor').value
+            };
+
+            // Validate form
+            if (!taskData.name || !taskData.startTime || !taskData.endTime) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            // Validate time range
+            if (taskData.startTime >= taskData.endTime) {
+                alert('A hora de término deve ser posterior à hora de início.');
+                return;
+            }
+
+            if (taskId) {
+                updateTask(taskId, taskData);
+            } else {
+                addTask(taskData);
+            }
+
+            // Close modal
+            taskModalInstance.hide();
+        }
+
+        function handleDeleteTask() {
+            const taskId = document.getElementById('taskId').value;
+            
+            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                deleteTask(taskId);
+                
+                // Close modal
+                taskModalInstance.hide();
+            }
+        }
+
+        // View rendering functions
+        function renderAllViews() {
+            renderTimeline();
+            renderAgenda();
+        }
+
+        function renderTimeline() {
+            timelineContainer.innerHTML = '';
+            
+            // Create hour markers
+            for (let hour = 0; hour < 24; hour++) {
+                const hourElement = document.createElement('div');
+                hourElement.className = 'timeline-hour';
+                hourElement.style.height = `${HOUR_HEIGHT}px`;
+                hourElement.style.top = `${hour * HOUR_HEIGHT}px`;
+                hourElement.textContent = `${hour.toString().padStart(2, '0')}:00`;
+                timelineContainer.appendChild(hourElement);
+            }
+            
+            // Create task elements
+            tasks.forEach(task => {
+                const startTimeParts = task.startTime.split(':');
+                const endTimeParts = task.endTime.split(':');
+                
+                const startMinutes = parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
+                const endMinutes = parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+                
+                const taskElement = document.createElement('div');
+                taskElement.className = 'timeline-task';
+                taskElement.style.backgroundColor = task.color;
+                taskElement.style.top = `${(startMinutes / 60) * HOUR_HEIGHT}px`;
+                taskElement.style.height = `${((endMinutes - startMinutes) / 60) * HOUR_HEIGHT}px`;
+                taskElement.style.left = '60px';
+                taskElement.style.right = '10px';
+                taskElement.textContent = `${task.name} (${task.startTime} - ${task.endTime})`;
+                
+                // Add click event to edit task
+                taskElement.addEventListener('click', function() {
+                    currentEditingTaskId = task.id;
+                    const taskToEdit = tasks.find(t => t.id === task.id);
+                    populateTaskForm(taskToEdit);
+                    taskModalInstance.show();
+                });
+                
+                timelineContainer.appendChild(taskElement);
+            });
+        }
+
+        function renderAgenda() {
+            agendaView.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                agendaView.innerHTML = '<p class="text-center text-muted">Nenhuma tarefa cadastrada.</p>';
+                return;
+            }
+            
+            // Sort tasks by start time
+            const sortedTasks = [...tasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+            
+            sortedTasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'card agenda-item';
+                taskElement.style.borderLeftColor = task.color;
+                
+                taskElement.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-1">${task.name}</h5>
+                            <span class="badge bg-secondary">${formatTimeRange(task.startTime, task.endTime)}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="task-color" style="background-color: ${task.color};"></span>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary edit-task-btn" data-task-id="${task.id}">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-task-btn" data-task-id="${task.id}">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                agendaView.appendChild(taskElement);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const taskToEdit = tasks.find(task => task.id === taskId);
+                    populateTaskForm(taskToEdit);
+                    taskModalInstance.show();
+                });
+            });
+            
+            document.querySelectorAll('.delete-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                        deleteTask(taskId);
+                    }
+                });
+            });
+        }
+
+        function renderCalendarView() {
+            calendarView.innerHTML = '';
+            
+            if (tasks.length === 0) {
+                calendarView.innerHTML = '<p class="text-center text-muted">Nenhuma tarefa cadastrada.</p>';
+                return;
+            }
+            
+            // Sort tasks by start time
+            const sortedTasks = [...tasks].sort((a, b) => a.startTime.localeCompare(b.startTime));
+            
+            // Group tasks by hour
+            const tasksByHour = {};
+            for (let hour = 0; hour < 24; hour++) {
+                tasksByHour[hour] = [];
+            }
+            
+            sortedTasks.forEach(task => {
+                const startHour = parseInt(task.startTime.split(':')[0]);
+                tasksByHour[startHour].push(task);
+            });
+            
+            // Create calendar view
+            for (let hour = 0; hour < 24; hour++) {
+                const hourElement = document.createElement('div');
+                hourElement.className = 'calendar-hour';
+                
+                const hourLabel = document.createElement('span');
+                hourLabel.className = 'hour-label';
+                hourLabel.textContent = `${hour.toString().padStart(2, '0')}:00`;
+                
+                hourElement.appendChild(hourLabel);
+                
+                tasksByHour[hour].forEach(task => {
+                    const taskElement = document.createElement('div');
+                    taskElement.className = 'calendar-task';
+                    taskElement.style.backgroundColor = task.color;
+                    taskElement.textContent = `${task.name} (${task.startTime} - ${task.endTime})`;
+                    
+                    // Add click event to edit task
+                    taskElement.addEventListener('click', function() {
+                        currentEditingTaskId = task.id;
+                        const taskToEdit = tasks.find(t => t.id === task.id);
+                        populateTaskForm(taskToEdit);
+                        taskModalInstance.show();
+                    });
+                    
+                    hourElement.appendChild(taskElement);
+                });
+                
+                calendarView.appendChild(hourElement);
+            }
+        }
+
+        function renderPieChart() {
+            // Clear previous content
+            pieChartContainer.innerHTML = '<canvas id="pieChart"></canvas>';
+            const pieChartCanvas = document.getElementById('pieChart');
+            
+            if (tasks.length === 0) {
+                pieChartContainer.innerHTML = '<p class="text-center text-muted">Nenhuma tarefa cadastrada para gerar o gráfico.</p>';
+                return;
+            }
+            
+            // Calculate task durations
+            const taskData = tasks.map(task => {
+                const startTimeParts = task.startTime.split(':');
+                const endTimeParts = task.endTime.split(':');
+                
+                const startMinutes = parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
+                const endMinutes = parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+                
+                return {
+                    name: task.name,
+                    duration: (endMinutes - startMinutes) / 60, // in hours
+                    color: task.color
+                };
+            });
+            
+            // Destroy previous chart if exists
+            if (pieChart) {
+                pieChart.destroy();
+            }
+            
+            const ctx = pieChartCanvas.getContext('2d');
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: taskData.map(task => task.name),
+                    datasets: [{
+                        data: taskData.map(task => task.duration),
+                        backgroundColor: taskData.map(task => task.color),
+                        borderColor: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 
+                                    'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: getComputedStyle(document.body).color,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${context.label}: ${value.toFixed(2)}h (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStatsView() {
+            if (tasks.length === 0) {
+                statsView.innerHTML = '<p class="text-center text-muted">Nenhuma tarefa cadastrada para gerar estatísticas.</p>';
+                return;
+            }
+            
+            // Calculate statistics
+            const stats = calculateStatistics();
+            updateStatsCards(stats);
+            renderStatsChart(stats);
+            renderTaskDistribution(stats);
+            updateProgressBars(stats);
+        }
+
+        function calculateStatistics() {
+            // Calculate daily total hours
+            const dailyTotal = tasks.reduce((total, task) => {
+                const startTimeParts = task.startTime.split(':');
+                const endTimeParts = task.endTime.split(':');
+                
+                const startMinutes = parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
+                const endMinutes = parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+                
+                return total + (endMinutes - startMinutes) / 60;
+            }, 0);
+            
+            // Calculate hours by period
+            const hoursByPeriod = {
+                week: dailyTotal * 7,
+                month: dailyTotal * 30,
+                year: dailyTotal * 365
+            };
+            
+            // Group tasks by name and calculate total hours per task
+            const tasksByName = {};
+            tasks.forEach(task => {
+                const startTimeParts = task.startTime.split(':');
+                const endTimeParts = task.endTime.split(':');
+                
+                const startMinutes = parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1]);
+                const endMinutes = parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]);
+                const duration = (endMinutes - startMinutes) / 60;
+                
+                if (!tasksByName[task.name]) {
+                    tasksByName[task.name] = {
+                        name: task.name,
+                        color: task.color,
+                        totalHours: 0,
+                        dailyHours: 0
+                    };
+                }
+                
+                tasksByName[task.name].totalHours += duration;
+                tasksByName[task.name].dailyHours += duration;
+            });
+            
+            // Convert to array and calculate period hours
+            const taskStats = Object.values(tasksByName).map(task => ({
+                ...task,
+                weekHours: task.dailyHours * 7,
+                monthHours: task.dailyHours * 30,
+                yearHours: task.dailyHours * 365
+            }));
+            
+            // Find longest task
+            const longestTask = taskStats.reduce((longest, task) => 
+                task.dailyHours > longest.dailyHours ? task : longest, 
+                { name: '-', dailyHours: 0 }
+            );
+            
+            return {
+                dailyTotal,
+                hoursByPeriod,
+                taskStats,
+                longestTask,
+                uniqueTasks: taskStats.length
+            };
+        }
+
+        function updateStatsCards(stats) {
+            document.getElementById('totalHours').textContent = 
+                `${stats.hoursByPeriod[currentStatsPeriod].toFixed(1)}h`;
+            
+            document.getElementById('totalHoursPeriod').textContent = 
+                `por ${getPeriodLabel(currentStatsPeriod)}`;
+            
+            document.getElementById('uniqueTasks').textContent = stats.uniqueTasks;
+            
+            document.getElementById('longestTask').textContent = stats.longestTask.name;
+            document.getElementById('longestTaskHours').textContent = 
+                `${stats.longestTask.dailyHours.toFixed(1)}h por dia`;
+        }
+
+        function renderStatsChart(stats) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            // Destroy previous chart if exists
+            if (statsChart) {
+                statsChart.destroy();
+            }
+            
+            const periodData = stats.taskStats.map(task => 
+                task[`${currentStatsPeriod}Hours`]
+            );
+            
+            const labels = stats.taskStats.map(task => task.name);
+            const colors = stats.taskStats.map(task => task.color);
+            
+            statsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Horas por ${getPeriodLabel(currentStatsPeriod)}`,
+                        data: periodData,
+                        backgroundColor: colors,
+                        borderColor: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 
+                                    'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw.toFixed(1)}h`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: getComputedStyle(document.body).color
+                            },
+                            grid: {
+                                color: getComputedStyle(document.body).getPropertyValue('--bs-border-color')
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: getComputedStyle(document.body).color,
+                                maxRotation: 45
+                            },
+                            grid: {
+                                color: getComputedStyle(document.body).getPropertyValue('--bs-border-color')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTaskDistribution(stats) {
+            const container = document.getElementById('taskDistribution');
+            container.innerHTML = '';
+            
+            stats.taskStats.forEach(task => {
+                const hours = task[`${currentStatsPeriod}Hours`];
+                const percentage = (hours / stats.hoursByPeriod[currentStatsPeriod]) * 100;
+                
+                const taskElement = document.createElement('div');
+                taskElement.className = 'mb-2';
+                taskElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="task-color" style="background-color: ${task.color};"></span>
+                            <span>${task.name}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-secondary">${hours.toFixed(1)}h</span>
+                            <small class="text-muted ms-1">${percentage.toFixed(1)}%</small>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(taskElement);
+            });
+        }
+
+        function updateProgressBars(stats) {
+            const weekPercentage = Math.min((stats.hoursByPeriod.week / 168) * 100, 100);
+            const monthPercentage = Math.min((stats.hoursByPeriod.month / 720) * 100, 100);
+            const yearPercentage = Math.min((stats.hoursByPeriod.year / 8760) * 100, 100);
+            
+            document.getElementById('weekProgress').style.width = `${weekPercentage}%`;
+            document.getElementById('weekProgress').textContent = `${stats.hoursByPeriod.week.toFixed(1)}h`;
+            
+            document.getElementById('monthProgress').style.width = `${monthPercentage}%`;
+            document.getElementById('monthProgress').textContent = `${stats.hoursByPeriod.month.toFixed(1)}h`;
+            
+            document.getElementById('yearProgress').style.width = `${yearPercentage}%`;
+            document.getElementById('yearProgress').textContent = `${stats.hoursByPeriod.year.toFixed(1)}h`;
+        }
+
+        function getPeriodLabel(period) {
+            const labels = {
+                week: 'semana',
+                month: 'mês',
+                year: 'ano'
+            };
+            return labels[period] || 'período';
+        }
+
+        function renderLifeView() {
+            lifeView.innerHTML = '';
+            
+            if (!userBirthDate) {
+                lifeView.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-x display-1 text-muted"></i>
+                        <h3 class="mt-3">Data de Nascimento Não Configurada</h3>
+                        <p class="text-muted">Para visualizar sua representação de tempo de vida, é necessário configurar sua data de nascimento.</p>
+                        <button class="btn btn-primary mt-3" id="configureLifeBtn">
+                            <i class="bi bi-gear"></i> Configurar Agora
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('configureLifeBtn').addEventListener('click', function() {
+                    birthDateModalInstance.show();
+                });
+                return;
+            }
+            
+            const lifeData = calculateLifeData();
+            renderLifeStats(lifeData);
+            renderLifeGrids(lifeData);
+        }
+
+        function calculateLifeData() {
+            const now = new Date();
+            const birth = userBirthDate;
+            const death = new Date(birth);
+            death.setFullYear(birth.getFullYear() + userLifeExpectancy);
+            
+            // Calculate lived and remaining time
+            const livedMs = now - birth;
+            const totalMs = death - birth;
+            const remainingMs = death - now;
+            
+            // Convert to different units
+            const livedDays = Math.floor(livedMs / (1000 * 60 * 60 * 24));
+            const totalDays = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+            const remainingDays = totalDays - livedDays;
+            
+            const livedWeeks = Math.floor(livedDays / 7);
+            const totalWeeks = Math.floor(totalDays / 7);
+            const remainingWeeks = totalWeeks - livedWeeks;
+            
+            const livedMonths = Math.floor(livedDays / 30.44); // Average month length
+            const totalMonths = Math.floor(totalDays / 30.44);
+            const remainingMonths = totalMonths - livedMonths;
+            
+            const livedYears = now.getFullYear() - birth.getFullYear();
+            const remainingYears = userLifeExpectancy - livedYears;
+            
+            // Calculate percentages
+            const livedPercentage = (livedMs / totalMs) * 100;
+            const remainingPercentage = 100 - livedPercentage;
+            
+            return {
+                lived: {
+                    days: livedDays,
+                    weeks: livedWeeks,
+                    months: Math.floor(livedMonths),
+                    years: livedYears
+                },
+                remaining: {
+                    days: remainingDays,
+                    weeks: remainingWeeks,
+                    months: Math.floor(remainingMonths),
+                    years: remainingYears
+                },
+                total: {
+                    days: totalDays,
+                    weeks: totalWeeks,
+                    months: Math.floor(totalMonths),
+                    years: userLifeExpectancy
+                },
+                percentages: {
+                    lived: livedPercentage,
+                    remaining: remainingPercentage
+                },
+                age: livedYears,
+                nextBirthday: new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) > now ? 
+                    new Date(now.getFullYear(), birth.getMonth(), birth.getDate()) :
+                    new Date(now.getFullYear() + 1, birth.getMonth(), birth.getDate())
+            };
+        }
+
+        function renderLifeStats(lifeData) {
+            const statsHTML = `
+                <div class="life-stats">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h3>${lifeData.age} anos</h3>
+                            <small class="text-muted">Idade Atual</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-primary">${lifeData.percentages.lived.toFixed(1)}%</h3>
+                            <small class="text-muted">Vivido</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3 class="text-success">${lifeData.percentages.remaining.toFixed(1)}%</h3>
+                            <small class="text-muted">Restante</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h3>${lifeData.total.years} anos</h3>
+                            <small class="text-muted">Expectativa</small>
+                        </div>
+                    </div>
+                    <div class="progress life-progress mt-3">
+                        <div class="progress-bar" role="progressbar" style="width: ${lifeData.percentages.lived}%">
+                            ${lifeData.percentages.lived.toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" id="editLifeSettingsBtn">
+                            <i class="bi bi-pencil"></i> Editar Configurações
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            lifeView.innerHTML = statsHTML;
+            
+            document.getElementById('editLifeSettingsBtn').addEventListener('click', function() {
+                // Pre-fill the modal with current values
+                document.getElementById('birthDate').value = userBirthDate.toISOString().split('T')[0];
+                document.getElementById('lifeExpectancy').value = userLifeExpectancy;
+                birthDateModalInstance.show();
+            });
+        }
+
+        function renderLifeGrids(lifeData) {
+            const gridsContainer = document.createElement('div');
+            gridsContainer.className = 'life-grid';
+            
+            /* Weeks grid
+            const weeksPerRow = 52; // One row per year
+            const weeksGrid = createLifeGrid(
+                'Semanas de Vida', 
+                lifeData.total.weeks, 
+                weeksPerRow, 
+                lifeData.lived.weeks, 
+                'semana'
+            );
+            gridsContainer.appendChild(weeksGrid);
+            */
+
+            // Months grid
+            const monthsPerRow = 12; // One row per year
+            const monthsGrid = createLifeGrid(
+                'Meses de Vida', 
+                lifeData.total.months, 
+                monthsPerRow, 
+                lifeData.lived.months, 
+                'mês'
+            );
+            gridsContainer.appendChild(monthsGrid);
+            
+            // Years grid
+            const yearsPerRow = 10;
+            const yearsGrid = createLifeGrid(
+                'Anos de Vida', 
+                lifeData.total.years, 
+                yearsPerRow, 
+                lifeData.lived.years, 
+                'ano'
+            );
+            gridsContainer.appendChild(yearsGrid);
+            
+            lifeView.appendChild(gridsContainer);
+        }
+
+        function createLifeGrid(title, totalUnits, unitsPerRow, livedUnits, unitType, actualTotal = null) {
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'life-unit-group';
+            
+            const titleElement = document.createElement('h5');
+            titleElement.className = 'mb-3';
+            titleElement.textContent = `${title} (${livedUnits} de ${actualTotal || totalUnits})`;
+            gridContainer.appendChild(titleElement);
+            
+            const gridElement = document.createElement('div');
+            gridElement.style.textAlign = 'center';
+            
+            for (let i = 0; i < totalUnits; i++) {
+                const unit = document.createElement('div');
+                unit.className = `life-unit ${i < livedUnits ? 'lived' : 'remaining'}`;
+                unit.title = `${unitType} ${i + 1}`;
+                
+                // Add tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'unit-tooltip';
+                tooltip.textContent = `${unitType.charAt(0).toUpperCase() + unitType.slice(1)} ${i + 1}`;
+                unit.appendChild(tooltip);
+                
+                gridElement.appendChild(unit);
+                
+                // Break line after each row
+                if ((i + 1) % unitsPerRow === 0 && i < totalUnits - 1) {
+                    gridElement.appendChild(document.createElement('br'));
+                }
+            }
+            
+            gridContainer.appendChild(gridElement);
+            return gridContainer;
+        }
+
+        // Utility functions
+        function formatTimeRange(startTime, endTime) {
+            return `${startTime} - ${endTime}`;
+        }
+    </script>
+</body>
+</html>
