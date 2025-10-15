@@ -1,0 +1,247 @@
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+[data-bs-theme="dark"] {
+    --bs-body-bg: #121212;
+    --bs-body-color: #e9ecef;
+    --bs-border-color: #495057;
+}
+
+[data-bs-theme="light"] {
+    --bs-body-bg: #ffffff;
+    --bs-body-color: #212529;
+    --bs-border-color: #dee2e6;
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.timeline-container {
+    position: relative;
+    height: 600px;
+    overflow-y: auto;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    background-color: var(--bs-body-bg);
+}
+
+.timeline-hour {
+    position: absolute;
+    width: 100%;
+    height: 50px;
+    border-bottom: 1px solid var(--bs-border-color);
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 0.8rem;
+    background-color: var(--bs-body-bg);
+}
+
+.timeline-task {
+    position: absolute;
+    border-radius: 0.25rem;
+    padding: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: white;
+    font-weight: bold;
+}
+
+.timeline-task:hover {
+    opacity: 0.8;
+    transform: scale(1.02);
+}
+
+.agenda-view {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.agenda-item {
+    border-left: 4px solid;
+    margin-bottom: 10px;
+}
+
+.pie-chart-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.calendar-view {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.calendar-hour {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 8px;
+    position: relative;
+    background-color: var(--bs-body-bg);
+}
+
+.calendar-task {
+    margin: 2px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+}
+
+.stats-view {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.stats-card {
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-chart-container {
+    height: 300px;
+    margin-bottom: 20px;
+}
+
+.period-selector {
+    margin-bottom: 20px;
+}
+
+.life-grid {
+    max-height: auto;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.life-unit {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin: 2px;
+    display: inline-block;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+
+.life-unit.lived {
+    background-color: var(--primary-color);
+}
+
+.life-unit.remaining {
+    background-color: var(--bs-border-color);
+}
+
+.life-unit:hover {
+    transform: scale(1.2);
+    z-index: 1;
+}
+
+.life-unit.lived:hover {
+    background-color: var(--danger-color);
+}
+
+.life-unit.remaining:hover {
+    background-color: var(--success-color);
+}
+
+.life-unit-group {
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--bs-border-color);
+    padding-bottom: 15px;
+}
+
+.life-stats {
+    background: var(--bs-body-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--bs-border-color);
+}
+
+.life-progress {
+    height: 10px;
+    margin: 5px 0;
+}
+
+.unit-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.life-unit:hover .unit-tooltip {
+    opacity: 1;
+}
+
+.nav-link.active {
+    font-weight: bold;
+}
+
+.task-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.hour-label {
+    width: 60px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.progress {
+    height: 25px;
+}
+
+/* Ensure proper contrast in both themes */
+.card {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+}
+
+.form-control {
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.form-control:focus {
+    background-color: var(--bs-body-bg);
+    border-color: var(--primary-color);
+    color: var(--bs-body-color);
+}
